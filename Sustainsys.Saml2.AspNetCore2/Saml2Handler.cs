@@ -66,7 +66,7 @@ namespace Sustainsys.Saml2.AspNetCore2
         }
 
         /// <InheritDoc />
-        public Task ChallengeAsync(AuthenticationProperties properties)
+        public async Task ChallengeAsync(AuthenticationProperties properties)
         {
             if (properties == null)
             {
@@ -86,9 +86,7 @@ namespace Sustainsys.Saml2.AspNetCore2
                 options,
                 properties.Items);
 
-            result.Apply(context, dataProtector, scheme.Name);
-
-            return Task.CompletedTask;
+            await result.Apply(context, dataProtector, scheme.Name);
         }
 
         /// <InheritDoc />
@@ -99,7 +97,7 @@ namespace Sustainsys.Saml2.AspNetCore2
         }
 
         /// <InheritDoc />
-        public Task<bool> HandleRequestAsync()
+        public async Task<bool> HandleRequestAsync()
         {
             if(context.Request.Path.StartsWithSegments(options.SPOptions.ModulePath, StringComparison.Ordinal))
             {
@@ -108,12 +106,12 @@ namespace Sustainsys.Saml2.AspNetCore2
 
                 var commandResult = CommandFactory.GetCommand(commandName).Run(
                     context.ToHttpRequestData(dataProtector.Unprotect), options);
+    
+                await commandResult.Apply(context, dataProtector, options.SignInScheme);
 
-                commandResult.Apply(context, dataProtector, options.SignInScheme);
-
-                return Task.FromResult(true);
+                return true;
             }
-            return Task.FromResult(false);
+            return false;
         }
     }
 }
